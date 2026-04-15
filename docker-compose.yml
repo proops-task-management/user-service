@@ -1,0 +1,43 @@
+services:
+  user-service:
+    build: .
+    env_file:
+      - ./.env
+    environment:
+      PORT: ${PORT:-8081}
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:-jdbc:mysql://db-user:3306/users_db}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-app_user}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-app_pass}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required (set it in .env)}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-86400000}
+    depends_on:
+      db-user:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+    networks:
+      - app-net
+
+  db-user:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: ${DB_USER_DATABASE:-users_db}
+      MYSQL_USER: ${DB_USER_USER:-app_user}
+      MYSQL_PASSWORD: ${DB_USER_PASSWORD:-app_pass}
+      MYSQL_ROOT_PASSWORD: ${DB_USER_ROOT_PASSWORD:-change_me_root}
+    volumes:
+      - db-user-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - app-net
+
+volumes:
+  db-user-data:
+
+networks:
+  app-net:
+    driver: bridge
