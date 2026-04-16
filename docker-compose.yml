@@ -1,37 +1,40 @@
 services:
+  db-user:
+    image: mysql:8.0
+    container_name: db-user
+    environment:
+      MYSQL_DATABASE: ${DB_USER_DATABASE}
+      MYSQL_USER: ${DB_USER_USER}
+      MYSQL_PASSWORD: ${DB_USER_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_USER_ROOT_PASSWORD}
+    volumes:
+      - db-user-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - app-net
+
   user-service:
     build: .
-    env_file:
-      - ./.env
+    image: "${DOCKER_IMAGE:-user-service}:${IMAGE_TAG:-0.0.1}"
+    container_name: user-service
+    ports:
+      - "${PORT:-8081}:${PORT:-8081}"
     environment:
       PORT: ${PORT:-8081}
-      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:-jdbc:mysql://db-user:3306/users_db}
-      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-app_user}
-      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-app_pass}
-      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required (set it in .env)}
+      SPRING_DATASOURCE_URL: jdbc:mysql://db-user:3306/${DB_USER_DATABASE}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_USER_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-86400000}
     depends_on:
       db-user:
         condition: service_healthy
-    ports:
-      - "8081:8081"
-    networks:
-      - app-net
-
-  db-user:
-    image: mysql:8.0
-    environment:
-      MYSQL_DATABASE: ${DB_USER_DATABASE:-users_db}
-      MYSQL_USER: ${DB_USER_USER:-app_user}
-      MYSQL_PASSWORD: ${DB_USER_PASSWORD:-app_pass}
-      MYSQL_ROOT_PASSWORD: ${DB_USER_ROOT_PASSWORD:-change_me_root}
-    volumes:
-      - db-user-data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--silent"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
+    restart: unless-stopped
     networks:
       - app-net
 
