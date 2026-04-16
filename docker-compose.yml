@@ -19,7 +19,6 @@ services:
       - app-net
 
   user-service:
-    build: .
     image: "${DOCKER_IMAGE:-user-service}:${IMAGE_TAG:-0.0.1}"
     container_name: user-service
     ports:
