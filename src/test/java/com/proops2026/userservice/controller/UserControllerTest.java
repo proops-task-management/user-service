@@ -1,7 +1,6 @@
 package com.proops2026.userservice.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.proops2026.userservice.controller.UserController;
 import com.proops2026.userservice.dto.request.CreateUserRequest;
 import com.proops2026.userservice.dto.response.UserResponse;
 import com.proops2026.userservice.exception.UserAlreadyExistsException;
@@ -44,6 +43,7 @@ class UserControllerTest {
     UserResponse response = UserResponse.builder()
         .id("f8f3899f-1b6d-4f5f-9b1f-18ea3c3df12f")
         .email("minh@example.com")
+        .role("member")
         .createdAt(LocalDateTime.parse("2026-04-15T10:30:00"))
         .build();
     when(userService.register(any(CreateUserRequest.class))).thenReturn(response);
@@ -59,6 +59,7 @@ class UserControllerTest {
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.id").value("f8f3899f-1b6d-4f5f-9b1f-18ea3c3df12f"))
         .andExpect(jsonPath("$.email").value("minh@example.com"))
+        .andExpect(jsonPath("$.role").value("member"))
         .andExpect(jsonPath("$.created_at").value("2026-04-15T10:30:00"));
     }
 
@@ -113,5 +114,31 @@ class UserControllerTest {
             .content(objectMapper.writeValueAsString(body)))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.message").value("password must be at least 8 characters"));
+    }
+
+    // -----------------------------------------------------------------------
+    // Test 5: invalid role -> 400 with error message
+    // -----------------------------------------------------------------------
+    @Test
+    void register_unknownRoleField_isIgnored() throws Exception {
+    UserResponse response = UserResponse.builder()
+        .id("f8f3899f-1b6d-4f5f-9b1f-18ea3c3df12f")
+        .email("test@example.com")
+        .role("member")
+        .createdAt(LocalDateTime.parse("2026-04-15T10:30:00"))
+        .build();
+    when(userService.register(any(CreateUserRequest.class))).thenReturn(response);
+
+        Map<String, String> body = Map.of(
+                "email", "test@example.com",
+                "password", "securePassword123",
+                "role", "admin"
+        );
+
+    mockMvc.perform(post("/users")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(body)))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.role").value("member"));
     }
 }

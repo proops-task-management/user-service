@@ -24,6 +24,24 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(401).body(new ErrorResponse(ex.getMessage()));
     }
 
+    @ExceptionHandler(UserNotFoundException.class)
+    ResponseEntity<ErrorResponse> handleUserNotFound(UserNotFoundException ex) {
+        log.warn("User lookup failed: {}", ex.getMessage());
+        return ResponseEntity.status(404).body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    ResponseEntity<ErrorResponse> handleForbidden(UnauthorizedException ex) {
+        log.warn("Forbidden action: {}", ex.getMessage());
+        return ResponseEntity.status(403).body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(BadRequestException.class)
+    ResponseEntity<ErrorResponse> handleBadRequest(BadRequestException ex) {
+        log.warn("Bad request: {}", ex.getMessage());
+        return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
         String message = ex.getBindingResult().getFieldErrors().stream()
@@ -38,5 +56,11 @@ public class GlobalExceptionHandler {
     ResponseEntity<ErrorResponse> handleUnreadable(HttpMessageNotReadableException ex) {
         log.warn("Unreadable request body");
         return ResponseEntity.status(400).body(new ErrorResponse("request body is required"));
+    }
+
+    @ExceptionHandler(Exception.class)
+    ResponseEntity<ErrorResponse> handleUnexpected(Exception ex) {
+        log.error("Unexpected error", ex);
+        return ResponseEntity.status(500).body(new ErrorResponse("internal server error"));
     }
 }
