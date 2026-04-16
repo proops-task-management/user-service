@@ -3,6 +3,7 @@ package com.proops2026.userservice.service.impl;
 import com.proops2026.userservice.dto.request.CreateUserRequest;
 import com.proops2026.userservice.dto.request.CreateManagedUserRequest;
 import com.proops2026.userservice.dto.request.UpdateUserRequest;
+import com.proops2026.userservice.dto.request.CreateUserWithRoleRequest;
 import com.proops2026.userservice.dto.response.UserResponse;
 import com.proops2026.userservice.exception.BadRequestException;
 import com.proops2026.userservice.exception.UnauthorizedException;
@@ -38,6 +39,15 @@ public class UserServiceImpl implements UserService {
         validateEmailNotTaken(normalizeEmail(request.getEmail()));
         User saved = userRepository.save(buildUser(request.getEmail(), request.getPassword(), "member"));
         log.info("User registered: {}", saved.getEmail());
+        return userMapper.toResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public UserResponse registerWithRole(CreateUserWithRoleRequest request) {
+        validateEmailNotTaken(normalizeEmail(request.getEmail()));
+        User saved = userRepository.save(buildUser(request.getEmail(), request.getPassword(), request.getRole()));
+        log.info("User registered via with-role endpoint: {} ({})", saved.getEmail(), saved.getRole());
         return userMapper.toResponse(saved);
     }
 

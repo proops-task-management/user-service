@@ -2,6 +2,7 @@ package com.proops2026.userservice.controller;
 
 import com.proops2026.userservice.dto.request.CreateUserRequest;
 import com.proops2026.userservice.dto.request.CreateManagedUserRequest;
+import com.proops2026.userservice.dto.request.CreateUserWithRoleRequest;
 import com.proops2026.userservice.dto.request.UpdateUserRequest;
 import com.proops2026.userservice.dto.response.UserResponse;
 import com.proops2026.userservice.service.UserService;
@@ -33,6 +34,12 @@ public class UserController {
     @PostMapping
     public ResponseEntity<UserResponse> register(@Valid @RequestBody CreateUserRequest request) {
         UserResponse response = userService.register(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PostMapping("/with-role")
+    public ResponseEntity<UserResponse> registerWithRole(@Valid @RequestBody CreateUserWithRoleRequest request) {
+        UserResponse response = userService.registerWithRole(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

@@ -2,6 +2,7 @@ package com.proops2026.userservice.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.proops2026.userservice.dto.request.CreateManagedUserRequest;
+import com.proops2026.userservice.dto.request.CreateUserWithRoleRequest;
 import com.proops2026.userservice.dto.request.UpdateUserRequest;
 import com.proops2026.userservice.dto.response.UserResponse;
 import com.proops2026.userservice.exception.UnauthorizedException;
@@ -98,6 +99,30 @@ class UserManagementControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value("managed-1"))
                 .andExpect(jsonPath("$.role").value("lead"));
+    }
+
+    @Test
+    void registerWithRole_validRequest_returns201() throws Exception {
+        UserResponse response = UserResponse.builder()
+                .id("external-1")
+                .email("external@example.com")
+                .role("qa_lead")
+                .createdAt(LocalDateTime.parse("2026-04-16T11:00:00"))
+                .build();
+        when(userService.registerWithRole(any(CreateUserWithRoleRequest.class))).thenReturn(response);
+
+        Map<String, String> body = Map.of(
+                "email", "external@example.com",
+                "password", "securePassword123",
+                "role", "QA_LEAD"
+        );
+
+        mockMvc.perform(post("/users/with-role")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value("external-1"))
+                .andExpect(jsonPath("$.role").value("qa_lead"));
     }
 
     @Test

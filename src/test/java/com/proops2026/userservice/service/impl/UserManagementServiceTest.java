@@ -1,6 +1,7 @@
 package com.proops2026.userservice.service.impl;
 
 import com.proops2026.userservice.dto.request.CreateManagedUserRequest;
+import com.proops2026.userservice.dto.request.CreateUserWithRoleRequest;
 import com.proops2026.userservice.dto.request.UpdateUserRequest;
 import com.proops2026.userservice.dto.response.UserResponse;
 import com.proops2026.userservice.exception.BadRequestException;
@@ -80,6 +81,24 @@ class UserManagementServiceTest {
                 .hasMessage("lead role required");
 
         verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void registerWithRole_acceptsCustomRoleWithoutValidation() {
+        CreateUserWithRoleRequest request = new CreateUserWithRoleRequest();
+        request.setEmail("external@example.com");
+        request.setPassword("securePassword123");
+        request.setRole("QA_LEAD");
+
+        when(userRepository.existsByEmail("external@example.com")).thenReturn(false);
+        when(passwordEncoder.encode("securePassword123")).thenReturn("hashed-password");
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        UserResponse response = userService.registerWithRole(request);
+
+        verify(userRepository).save(userCaptor.capture());
+        assertThat(userCaptor.getValue().getRole()).isEqualTo("qa_lead");
+        assertThat(response.getRole()).isEqualTo("qa_lead");
     }
 
     @Test
