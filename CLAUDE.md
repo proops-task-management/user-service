@@ -12,6 +12,32 @@ Only implement what is defined in IRD-001. Nothing more.
 
 ---
 
+## Auth & Observability (Production Program — D6, IRD-001 amended + ADR-005)
+
+**JWT signing is RS256 (asymmetric), not HS256.**
+- This service holds the **private key** and is the only component that can sign tokens.
+  api-gateway verifies with the **public key** only (D7) — no shared secret exists.
+- Key source: `JWT_PRIVATE_KEY` (PKCS#8 PEM) — replaces the old `JWT_SECRET`. From ESO/SSM
+  (`/proops/<env>/jwt/private_key`) in k8s; from an env var locally.
+- Tokens carry header `kid: proops-v1` (rotation handle) and the unchanged claims
+  `userId / email / role / jti / iat / exp`. `JwtUtil` parses the PEM once at startup
+  (`@PostConstruct`) via the JDK `KeyFactory` — no BouncyCastle dependency.
+- Local run: `export JWT_PRIVATE_KEY="$(cat jwt-private-dev.pem)"` (dev keypair, never committed).
+
+**Actuator endpoints exposed** (allowlist `health,prometheus`):
+- `/actuator/health/liveness` + `/actuator/health/readiness` — wired to k8s probes.
+- `/actuator/prometheus` — Micrometer metrics; histogram buckets capped to the SLO set
+  `100ms,300ms,1s,3s` (IRD-020 cardinality budget). No auth (gateway enforces upstream).
+
+**Production hardening:** `server.shutdown=graceful` (20s drain), HikariCP `maximum-pool-size=10`
+(IRD-018 budget), JVM `-XX:MaxRAMPercentage=75.0` set in the **Dockerfile** (`JAVA_TOOL_OPTIONS`),
+never in `application.yml`.
+
+**Integration tests** run against **real MySQL via Testcontainers** (`mysql:8.0`) — Docker must be
+running locally. See `integration/UserServiceRs256IntegrationTest`.
+
+---
+
 ## NEVER
 - Generate code for task-service, api-gateway, or notification-service
 - Add endpoints not defined in IRD-001
