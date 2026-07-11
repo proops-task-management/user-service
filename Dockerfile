@@ -18,6 +18,11 @@ EXPOSE 8081
 
 USER nobody
 
+# Heap sizes relative to the container memory LIMIT (not the host) — the JVM reads
+# cgroup limits and takes 75% for heap. Set here (JVM startup), never in application.yml.
+# k8s/chart can override this env without rebuilding the image (IRD-001 amend, IRD-017).
+ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75.0"
+
 # Liveness for orchestrators + satisfies Trivy DS-0026. Hits the service's own
 # GET /health (direct 200, no auth). wget ships with the alpine busybox base.
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
