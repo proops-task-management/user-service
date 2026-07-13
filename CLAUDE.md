@@ -299,7 +299,7 @@ public class CreateUserRequest {
 | Class | PascalCase | `UserServiceImpl` |
 | Method | camelCase, verb-first | `findByEmail`, `validateEmailNotTaken` |
 | Variable | camelCase | `savedUser`, `hashedPassword` |
-| Constant | UPPER_SNAKE_CASE | `JWT_SECRET_KEY` |
+| Constant | UPPER_SNAKE_CASE | `JWT_EXPIRES_IN` |
 | DTO request | Action + Request | `CreateUserRequest`, `LoginRequest` |
 | DTO response | Entity + Response | `UserResponse`, `LoginResponse` |
 | Exception | Noun + Exception | `UserAlreadyExistsException` |
